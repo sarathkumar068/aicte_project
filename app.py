@@ -2,28 +2,32 @@ import os
 import pickle
 import streamlit as st
 from streamlit_option_menu import option_menu
-import numpy as np  # Added for numeric conversions
+import numpy as np
 
-# Set Streamlit page configuration
+# ✅ Set Streamlit Page Configuration
 st.set_page_config(page_title="Prediction of Disease Outbreaks", layout="wide", page_icon="🧑‍⚕️")
 
-# Define paths to saved models (Use raw strings for Windows compatibility)
-MODEL_PATH = r"C:\Users\ELCOT\Desktop\aicte_project\saved_models"
+# ✅ Define paths to saved models
+MODEL_PATH = r"C:\Users\ELCOT\Desktop\aicte_project\saved_models"  # Ensure this folder contains all .sav model files
 
-# Load saved models with error handling
+# ✅ Load saved models with error handling
 def load_model(file_name):
+    model_path = os.path.join(MODEL_PATH, file_name)
+    if not os.path.exists(model_path):
+        st.error(f"⚠️ Model file not found: {model_path}")
+        return None
     try:
-        with open(os.path.join(MODEL_PATH, file_name), "rb") as model_file:
+        with open(model_path, "rb") as model_file:
             return pickle.load(model_file)
     except Exception as e:
-        st.error(f"Error loading model {file_name}: {e}")
+        st.error(f"⚠️ Error loading model {file_name}: {e}")
         return None
 
 diabetes_model = load_model("diabetes_model.sav")
 heart_disease_model = load_model("heart_disease_model.sav")
 parkinsons_model = load_model("parkinsons_model.sav")
 
-# Sidebar menu
+# ✅ Sidebar menu
 with st.sidebar:
     selected = option_menu("Prediction of Disease Outbreaks System",
                            ["Diabetes Prediction", "Heart Disease Prediction", "Parkinsons Prediction"],
@@ -31,18 +35,18 @@ with st.sidebar:
                            icons=["activity", "heart", "person"],
                            default_index=0)
 
-# Function to convert user input safely
-def safe_convert(value, dtype=float):
+# ✅ Function to safely convert input to float
+def safe_convert(value):
     try:
-        return dtype(value)
+        return float(value)
     except ValueError:
-        return None  # Return None for invalid input
+        return None
 
-# 🩸 Diabetes Prediction
+# ============================== 🩸 Diabetes Prediction ============================== #
 if selected == "Diabetes Prediction":
     st.title("Diabetes Prediction using ML")
 
-    # User input
+    # Collect user inputs
     col1, col2, col3 = st.columns(3)
     with col1: Pregnancies = st.text_input("Number of Pregnancies")
     with col2: Glucose = st.text_input("Glucose Level")
@@ -53,22 +57,23 @@ if selected == "Diabetes Prediction":
     with col1: DiabetesPedigreeFunction = st.text_input("Diabetes Pedigree Function Value")
     with col2: Age = st.text_input("Age of the Person")
 
-    # Prediction
+    # Predict Diabetes
     if st.button("Diabetes Test Result"):
-        user_input = [Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, BMI, DiabetesPedigreeFunction, Age]
-        user_input = [safe_convert(x) for x in user_input]
-
-        if None in user_input:
-            st.error("Please enter valid numeric values!")
+        if diabetes_model:
+            user_input = [safe_convert(x) for x in [Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, BMI, DiabetesPedigreeFunction, Age]]
+            if None in user_input:
+                st.error("⚠️ Please enter valid numeric values!")
+            else:
+                diab_prediction = diabetes_model.predict([user_input])
+                st.success("✅ The person is diabetic" if diab_prediction[0] == 1 else "✅ The person is not diabetic")
         else:
-            diab_prediction = diabetes_model.predict([user_input])
-            st.success("The person is diabetic" if diab_prediction[0] == 1 else "The person is not diabetic")
+            st.error("❌ Model not loaded. Check the file path!")
 
-# ❤️ Heart Disease Prediction
+# ============================== ❤️ Heart Disease Prediction ============================== #
 if selected == "Heart Disease Prediction":
     st.title("Heart Disease Prediction using ML")
 
-    # User input
+    # Collect user inputs
     col1, col2, col3 = st.columns(3)
     with col1: age = st.text_input("Age")
     with col2: sex = st.text_input("Sex (1=Male, 0=Female)")
@@ -84,54 +89,39 @@ if selected == "Heart Disease Prediction":
     with col3: ca = st.text_input("Major Vessels Colored by Fluoroscopy")
     with col1: thal = st.text_input("Thal (0=Normal, 1=Fixed Defect, 2=Reversible Defect)")
 
-    # Prediction
+    # Predict Heart Disease
     if st.button("Heart Disease Test Result"):
-        user_input = [age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak, slope, ca, thal]
-        user_input = [safe_convert(x) for x in user_input]
-
-        if None in user_input:
-            st.error("Please enter valid numeric values!")
+        if heart_disease_model:
+            user_input = [safe_convert(x) for x in [age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak, slope, ca, thal]]
+            if None in user_input:
+                st.error("⚠️ Please enter valid numeric values!")
+            else:
+                heart_prediction = heart_disease_model.predict([user_input])
+                st.success("✅ The person has heart disease" if heart_prediction[0] == 1 else "✅ The person does not have heart disease")
         else:
-            heart_prediction = heart_disease_model.predict([user_input])
-            st.success("The person has heart disease" if heart_prediction[0] == 1 else "The person does not have heart disease")
+            st.error("❌ Model not loaded. Check the file path!")
 
-# 🧠 Parkinson's Disease Prediction
+# ============================== 🧠 Parkinson's Disease Prediction ============================== #
 if selected == "Parkinsons Prediction":
     st.title("Parkinson's Disease Prediction using ML")
 
-    # User input
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1: fo = st.text_input("MDVP:Fo(Hz)")
-    with col2: fhi = st.text_input("MDVP:Fhi(Hz)")
-    with col3: flo = st.text_input("MDVP:Flo(Hz)")
-    with col4: Jitter_percent = st.text_input("MDVP:Jitter(%)")
-    with col5: Jitter_Abs = st.text_input("MDVP:Jitter(Abs)")
-    with col1: RAP = st.text_input("MDVP:RAP")
-    with col2: PPQ = st.text_input("MDVP:PPQ")
-    with col3: DDP = st.text_input("Jitter:DDP")
-    with col4: Shimmer = st.text_input("MDVP:Shimmer")
-    with col5: Shimmer_dB = st.text_input("MDVP:Shimmer(dB)")
-    with col1: APQ3 = st.text_input("Shimmer:APQ3")
-    with col2: APQ5 = st.text_input("Shimmer:APQ5")
-    with col3: APQ = st.text_input("MDVP:APQ")
-    with col4: DDA = st.text_input("Shimmer:DDA")
-    with col5: NHR = st.text_input("NHR")
-    with col1: HNR = st.text_input("HNR")
-    with col2: RPDE = st.text_input("RPDE")
-    with col3: DFA = st.text_input("DFA")
-    with col4: spread1 = st.text_input("Spread1")
-    with col5: spread2 = st.text_input("Spread2")
-    with col1: D2 = st.text_input("D2")
-    with col2: PPE = st.text_input("PPE")
+    # Collect user inputs
+    inputs = []
+    labels = ["MDVP:Fo(Hz)", "MDVP:Fhi(Hz)", "MDVP:Flo(Hz)", "MDVP:Jitter(%)", "MDVP:Jitter(Abs)", "MDVP:RAP", "MDVP:PPQ", "Jitter:DDP",
+              "MDVP:Shimmer", "MDVP:Shimmer(dB)", "Shimmer:APQ3", "Shimmer:APQ5", "MDVP:APQ", "Shimmer:DDA", "NHR", "HNR", "RPDE",
+              "DFA", "Spread1", "Spread2", "D2", "PPE"]
+    
+    for label in labels:
+        inputs.append(st.text_input(label))
 
-    # Prediction
+    # Predict Parkinson's Disease
     if st.button("Parkinson's Test Result"):
-        user_input = [fo, fhi, flo, Jitter_percent, Jitter_Abs, RAP, PPQ, DDP, Shimmer, Shimmer_dB, APQ3, APQ5,
-                      APQ, DDA, NHR, HNR, RPDE, DFA, spread1, spread2, D2, PPE]
-        user_input = [safe_convert(x) for x in user_input]
-
-        if None in user_input:
-            st.error("Please enter valid numeric values!")
+        if parkinsons_model:
+            user_input = [safe_convert(x) for x in inputs]
+            if None in user_input:
+                st.error("⚠️ Please enter valid numeric values!")
+            else:
+                parkinsons_prediction = parkinsons_model.predict([user_input])
+                st.success("✅ The person has Parkinson's disease" if parkinsons_prediction[0] == 1 else "✅ The person does not have Parkinson's disease")
         else:
-            parkinsons_prediction = parkinsons_model.predict([user_input])
-            st.success("The person has Parkinson's disease" if parkinsons_prediction[0] == 1 else "The person does not have Parkinson's disease")
+            st.error("❌ Model not loaded. Check the file path!")
