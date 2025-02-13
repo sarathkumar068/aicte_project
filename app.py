@@ -7,8 +7,8 @@ import numpy as np
 # ✅ Set Streamlit Page Configuration
 st.set_page_config(page_title="Prediction of Disease Outbreaks", layout="wide", page_icon="🧑‍⚕️")
 
-# ✅ Define paths to saved models
-MODEL_PATH = r"C:\Users\ELCOT\Desktop\aicte_project\saved_models"  # Ensure this folder contains all .sav model files
+# ✅ Define a relative path for model storage
+MODEL_PATH = os.path.join(os.getcwd(), "saved_models")  # Looks for 'saved_models' in the current directory
 
 # ✅ Load saved models with error handling
 def load_model(file_name):
